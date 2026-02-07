@@ -30,8 +30,8 @@ export const Hero: React.FC<HeroProps> = ({ onCtaClick }) => {
         </h1>
 
         <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200 drop-shadow-md">
-          Core BArrier는 복잡한 보안 규정과 방대한 연구 데이터를 AI로 자동화합니다.<br className="hidden sm:block"/>
-          불필요한 관리 소요를 줄이고, 연구 본연의 가치에 집중하세요.
+          연구만 하기에도 시간은 부족합니다.<br className="hidden sm:block"/>
+          Core BArrier는 파편화된 연구 데이터와 까다로운 보안 규정을 AI로 자동 관리합니다.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-300">

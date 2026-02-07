@@ -30,8 +30,10 @@ function doPost(e) {
     
     const data = JSON.parse(e.postData.contents);
     const email = data.email;
+    const survey = data.survey || {};
     
     Logger.log('파싱된 이메일:', email);
+    Logger.log('설문 조사 데이터:', survey);
     
     // 이메일 유효성 검사
     if (!email || !email.includes('@')) {
@@ -47,7 +49,15 @@ function doPost(e) {
     
     // 헤더가 없으면 추가
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['이메일', '등록일시']);
+      sheet.appendRow([
+        '이메일', 
+        '등록일시', 
+        '소속 기관 유형', 
+        '연구 분야', 
+        '연구팀 규모', 
+        '관심도', 
+        '추가 의견'
+      ]);
       Logger.log('헤더 추가됨');
     }
     
@@ -58,9 +68,17 @@ function doPost(e) {
     
     Logger.log('타임스탬프:', timestamp);
     
-    // 데이터 추가
-    sheet.appendRow([email, timestamp]);
-    Logger.log('데이터 추가 완료:', email, timestamp);
+    // 데이터 추가 (이메일 + 설문 조사)
+    sheet.appendRow([
+      email, 
+      timestamp,
+      survey.organizationType || '',
+      survey.researchField || '',
+      survey.teamSize || '',
+      survey.interestLevel || '',
+      survey.additionalInfo || ''
+    ]);
+    Logger.log('데이터 추가 완료:', email, timestamp, survey);
     
     // 성공 응답
     return ContentService.createTextOutput(

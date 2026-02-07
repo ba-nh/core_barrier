@@ -7,9 +7,24 @@ interface WaitlistModalProps {
   onClose: () => void;
 }
 
+interface SurveyData {
+  organizationType: string;
+  researchField: string;
+  teamSize: string;
+  interestLevel: string;
+  additionalInfo: string;
+}
+
 export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'emailSubmitted' | 'survey' | 'success'>('idle');
+  const [surveyData, setSurveyData] = useState<SurveyData>({
+    organizationType: '',
+    researchField: '',
+    teamSize: '',
+    interestLevel: '',
+    additionalInfo: '',
+  });
 
   if (!isOpen) return null;
 
@@ -65,16 +80,53 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
         const result = await response.json();
         
         if (response.ok && result.success) {
-          setStatus('success');
-          setEmail('');
+          setStatus('emailSubmitted');
+          // 이메일은 유지 (설문 조사와 함께 제출)
         } else {
           throw new Error(result.error || '제출 실패');
         }
       }
     } catch (error) {
       console.error('이메일 제출 오류:', error);
-      // 오류 발생 시에도 성공 화면 표시 (사용자 경험을 위해)
-      // 실제 운영 환경에서는 오류 메시지를 표시하는 것이 좋습니다
+      // 오류 발생 시에도 설문 조사로 진행
+      setStatus('emailSubmitted');
+    }
+  };
+
+  const handleSurveySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    
+    try {
+      // 이메일과 설문 조사 데이터를 함께 제출
+      const response = await fetch('/api/submit-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email,
+          survey: surveyData,
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        setStatus('success');
+        setEmail('');
+        setSurveyData({
+          organizationType: '',
+          researchField: '',
+          teamSize: '',
+          interestLevel: '',
+          additionalInfo: '',
+        });
+      } else {
+        throw new Error(result.error || '제출 실패');
+      }
+    } catch (error) {
+      console.error('설문 조사 제출 오류:', error);
       setStatus('success');
     }
   };
@@ -101,6 +153,121 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
                 Core BArrier의 초기 출시에 대한 소식을<br/>가장 먼저 알려드리겠습니다.
               </p>
               <Button onClick={onClose} className="w-full">닫기</Button>
+            </div>
+          ) : status === 'emailSubmitted' || status === 'survey' ? (
+            <div>
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2">간단한 설문 조사</h3>
+                <p className="text-slate-400 text-sm">
+                  더 나은 서비스를 제공하기 위해 몇 가지 질문에 답변해주세요.
+                </p>
+              </div>
+
+              <form onSubmit={handleSurveySubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    소속 기관 유형 <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    required
+                    value={surveyData.organizationType}
+                    onChange={(e) => setSurveyData({ ...surveyData, organizationType: e.target.value })}
+                    className="w-full h-10 px-3 bg-dark-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  >
+                    <option value="">선택해주세요</option>
+                    <option value="대학">대학</option>
+                    <option value="연구소">연구소</option>
+                    <option value="기업">기업</option>
+                    <option value="병원">병원</option>
+                    <option value="기타">기타</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    연구 분야 <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    required
+                    value={surveyData.researchField}
+                    onChange={(e) => setSurveyData({ ...surveyData, researchField: e.target.value })}
+                    className="w-full h-10 px-3 bg-dark-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  >
+                    <option value="">선택해주세요</option>
+                    <option value="의생명">의생명</option>
+                    <option value="공학">공학</option>
+                    <option value="자연과학">자연과학</option>
+                    <option value="사회과학">사회과학</option>
+                    <option value="인문학">인문학</option>
+                    <option value="기타">기타</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    연구팀 규모 <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    required
+                    value={surveyData.teamSize}
+                    onChange={(e) => setSurveyData({ ...surveyData, teamSize: e.target.value })}
+                    className="w-full h-10 px-3 bg-dark-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  >
+                    <option value="">선택해주세요</option>
+                    <option value="1-5명">1-5명</option>
+                    <option value="6-10명">6-10명</option>
+                    <option value="11-20명">11-20명</option>
+                    <option value="21-50명">21-50명</option>
+                    <option value="50명 이상">50명 이상</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    관심도 <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    required
+                    value={surveyData.interestLevel}
+                    onChange={(e) => setSurveyData({ ...surveyData, interestLevel: e.target.value })}
+                    className="w-full h-10 px-3 bg-dark-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  >
+                    <option value="">선택해주세요</option>
+                    <option value="매우 높음">매우 높음</option>
+                    <option value="높음">높음</option>
+                    <option value="보통">보통</option>
+                    <option value="낮음">낮음</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    추가 의견 (선택사항)
+                  </label>
+                  <textarea
+                    value={surveyData.additionalInfo}
+                    onChange={(e) => setSurveyData({ ...surveyData, additionalInfo: e.target.value })}
+                    placeholder="원하시는 기능이나 궁금한 점을 알려주세요..."
+                    rows={3}
+                    className="w-full px-3 py-2 bg-dark-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-600 resize-none"
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={status === 'loading'}
+                >
+                  {status === 'loading' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      제출 중...
+                    </>
+                  ) : (
+                    '설문 조사 제출하기'
+                  )}
+                </Button>
+              </form>
             </div>
           ) : (
             <>

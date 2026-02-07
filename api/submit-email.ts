@@ -18,7 +18,7 @@ export default async function handler(
   }
 
   try {
-    const { email } = request.body;
+    const { email, survey } = request.body;
 
     if (!email || !email.includes('@')) {
       return response.status(400).json({ error: '유효한 이메일 주소가 필요합니다' });
@@ -36,15 +36,15 @@ export default async function handler(
       });
     }
 
-    // Google Apps Script로 데이터 전송
-    console.log('Google Apps Script로 요청 전송:', { email, url: googleAppsScriptUrl });
+    // Google Apps Script로 데이터 전송 (이메일 + 설문 조사)
+    console.log('Google Apps Script로 요청 전송:', { email, survey, url: googleAppsScriptUrl });
     
     const scriptResponse = await fetch(googleAppsScriptUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, survey }),
     });
 
     console.log('Google Apps Script 응답 상태:', scriptResponse.status);
