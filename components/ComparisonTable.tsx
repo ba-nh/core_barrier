@@ -16,8 +16,8 @@ export const ComparisonTable: React.FC = () => {
               <tr className="border-b border-slate-700">
                 <th className="py-6 px-4 text-slate-400 font-medium">기능 / 서비스</th>
                 <th className="py-6 px-4 text-white text-xl font-bold bg-brand-900/20 border-t-4 border-brand-500 w-1/3 text-center">Core BArrier</th>
-                <th className="py-6 px-4 text-slate-400 font-medium text-center">DRM (파수, 마크애니)</th>
-                <th className="py-6 px-4 text-slate-400 font-medium text-center">협업 툴 (Notion, Slack)</th>
+                <th className="py-6 px-4 text-slate-400 font-medium text-center">DRM</th>
+                <th className="py-6 px-4 text-slate-400 font-medium text-center">협업 툴</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">

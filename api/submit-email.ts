@@ -37,6 +37,8 @@ export default async function handler(
     }
 
     // Google Apps Script로 데이터 전송
+    console.log('Google Apps Script로 요청 전송:', { email, url: googleAppsScriptUrl });
+    
     const scriptResponse = await fetch(googleAppsScriptUrl, {
       method: 'POST',
       headers: {
@@ -45,7 +47,19 @@ export default async function handler(
       body: JSON.stringify({ email }),
     });
 
-    const scriptResult = await scriptResponse.json();
+    console.log('Google Apps Script 응답 상태:', scriptResponse.status);
+    
+    // 응답 텍스트 확인
+    const responseText = await scriptResponse.text();
+    console.log('Google Apps Script 응답 본문:', responseText);
+
+    let scriptResult;
+    try {
+      scriptResult = JSON.parse(responseText);
+    } catch (e) {
+      console.error('JSON 파싱 오류:', e, '응답:', responseText);
+      throw new Error('Google Apps Script 응답 파싱 실패');
+    }
 
     if (scriptResult.success) {
       console.log('Google Sheets에 이메일 추가 완료:', email);
@@ -55,20 +69,22 @@ export default async function handler(
       });
     } else {
       console.error('Google Apps Script 오류:', scriptResult.error);
-      // 오류 발생 시에도 사용자에게는 성공 메시지 표시
-      return response.status(200).json({
-        success: true,
-        message: '이메일이 성공적으로 등록되었습니다',
+      // 실제 오류를 반환하여 디버깅 가능하게 함
+      return response.status(500).json({
+        success: false,
+        error: scriptResult.error || 'Google Apps Script 오류',
+        details: scriptResult,
       });
     }
   } catch (error: any) {
     console.error('이메일 제출 오류:', error);
+    console.error('오류 스택:', error.stack);
     
-    // 오류 발생 시에도 사용자에게는 성공 메시지 표시
-    // (실제 운영에서는 로깅 서비스에 오류 기록)
-    return response.status(200).json({
-      success: true,
-      message: '이메일이 성공적으로 등록되었습니다',
+    // 실제 오류를 반환하여 디버깅 가능하게 함
+    return response.status(500).json({
+      success: false,
+      error: error.message || '서버 오류가 발생했습니다',
+      details: error.toString(),
     });
   }
 }
