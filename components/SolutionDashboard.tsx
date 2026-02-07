@@ -333,7 +333,7 @@ const MonitoringTab = () => {
                     <span className="text-sm font-semibold">비인가 저장매체 파일 이동 감지 (project_alpha.zip)</span>
                  </motion.div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
