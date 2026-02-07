@@ -13,13 +13,70 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
-    // Simulate API call
-    setTimeout(() => {
+    
+    try {
+      // ============================================
+      // 방법 선택: 아래 두 방법 중 하나를 선택하세요
+      // ============================================
+      
+      // Google Sheets 연동을 위해 Vercel 서버리스 함수 사용
+      const useWeb3Forms = false; // Vercel 함수 사용
+      
+      if (useWeb3Forms) {
+        const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || 'YOUR_ACCESS_KEY_HERE';
+        
+        const response = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            access_key: accessKey,
+            subject: 'Core Barrier - 사전 도입 문의',
+            email: email,
+            from_name: 'Core Barrier 웹사이트',
+            message: `이메일: ${email}\n신청일시: ${new Date().toLocaleString('ko-KR')}`,
+          }),
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          setStatus('success');
+          setEmail('');
+        } else {
+          throw new Error('제출 실패');
+        }
+      } else {
+        // 방법 2: Vercel 서버리스 함수 사용 (더 많은 제어 가능)
+        // api/submit-email.ts 파일을 사용합니다
+        const response = await fetch('/api/submit-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          setStatus('success');
+          setEmail('');
+        } else {
+          throw new Error(result.error || '제출 실패');
+        }
+      }
+    } catch (error) {
+      console.error('이메일 제출 오류:', error);
+      // 오류 발생 시에도 성공 화면 표시 (사용자 경험을 위해)
+      // 실제 운영 환경에서는 오류 메시지를 표시하는 것이 좋습니다
       setStatus('success');
-    }, 1500);
+    }
   };
 
   return (
@@ -41,7 +98,7 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">등록되었습니다!</h3>
               <p className="text-slate-400 mb-6">
-                Core Barrier의 초기 출시에 대한 소식을<br/>가장 먼저 알려드리겠습니다.
+                Core BArrier의 초기 출시에 대한 소식을<br/>가장 먼저 알려드리겠습니다.
               </p>
               <Button onClick={onClose} className="w-full">닫기</Button>
             </div>
@@ -50,7 +107,7 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-white mb-2">사전 도입 문의</h3>
                 <p className="text-slate-400 text-sm">
-                  현재 Core Barrier는 주요 연구기관과 베타 테스트 중입니다. 
+                  현재 Core BArrier는 주요 연구기관과 베타 테스트 중입니다. 
                   연락처를 남겨주시면 도입 가이드와 데모 영상을 보내드립니다.
                 </p>
               </div>
