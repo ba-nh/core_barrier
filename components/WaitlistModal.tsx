@@ -253,20 +253,57 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
                   />
                 </div>
                 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={status === 'loading'}
-                >
-                  {status === 'loading' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      제출 중...
-                    </>
-                  ) : (
-                    '설문 조사 제출하기'
-                  )}
-                </Button>
+                <div className="flex gap-3">
+                  <Button 
+                    type="button"
+                    onClick={async () => {
+                      // 설문 조사 없이 이메일만 저장
+                      setStatus('loading');
+                      try {
+                        const response = await fetch('/api/submit-email', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ 
+                            email,
+                            survey: null, // 설문 조사 없이 저장
+                          }),
+                        });
+
+                        const result = await response.json();
+                        
+                        if (response.ok && result.success) {
+                          setStatus('success');
+                          setEmail('');
+                        } else {
+                          throw new Error(result.error || '제출 실패');
+                        }
+                      } catch (error) {
+                        console.error('이메일 제출 오류:', error);
+                        setStatus('success');
+                      }
+                    }}
+                    className="flex-1 bg-slate-700 hover:bg-slate-600"
+                    disabled={status === 'loading'}
+                  >
+                    건너뛰기
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="flex-1" 
+                    disabled={status === 'loading'}
+                  >
+                    {status === 'loading' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        제출 중...
+                      </>
+                    ) : (
+                      '설문 조사 제출하기'
+                    )}
+                  </Button>
+                </div>
               </form>
             </div>
           ) : (

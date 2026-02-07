@@ -68,17 +68,66 @@ function doPost(e) {
     
     Logger.log('타임스탬프:', timestamp);
     
-    // 데이터 추가 (이메일 + 설문 조사)
-    sheet.appendRow([
-      email, 
-      timestamp,
-      survey.organizationType || '',
-      survey.researchField || '',
-      survey.teamSize || '',
-      survey.interestLevel || '',
-      survey.additionalInfo || ''
-    ]);
-    Logger.log('데이터 추가 완료:', email, timestamp, survey);
+    // 이메일로 기존 행 찾기
+    const emailColumn = 1; // A열이 이메일
+    const dataRange = sheet.getDataRange();
+    const values = dataRange.getValues();
+    let existingRowIndex = -1;
+    
+    // 헤더를 제외하고 이메일 검색 (2행부터)
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][emailColumn - 1] === email) {
+        existingRowIndex = i + 1; // 시트 행 번호는 1부터 시작
+        Logger.log('기존 이메일 발견, 행 번호:', existingRowIndex);
+        break;
+      }
+    }
+    
+    // 설문 조사가 있으면 기존 행 업데이트, 없으면 새 행 추가
+    if (survey && Object.keys(survey).length > 0) {
+      // 설문 조사 데이터가 있음
+      if (existingRowIndex > 0) {
+        // 기존 행 업데이트 (이메일과 등록일시는 유지, 설문 조사만 업데이트)
+        sheet.getRange(existingRowIndex, 3, 1, 5).setValues([[
+          survey.organizationType || '',
+          survey.researchField || '',
+          survey.teamSize || '',
+          survey.interestLevel || '',
+          survey.additionalInfo || ''
+        ]]);
+        Logger.log('기존 행 업데이트 완료 (설문 조사 추가):', email, existingRowIndex);
+      } else {
+        // 이메일이 없으면 새 행 추가 (이메일 + 설문 조사)
+        sheet.appendRow([
+          email, 
+          timestamp,
+          survey.organizationType || '',
+          survey.researchField || '',
+          survey.teamSize || '',
+          survey.interestLevel || '',
+          survey.additionalInfo || ''
+        ]);
+        Logger.log('새 행 추가 완료 (이메일 + 설문 조사):', email, timestamp);
+      }
+    } else {
+      // 설문 조사가 없으면 이메일만 저장
+      if (existingRowIndex > 0) {
+        // 이미 존재하는 이메일이면 업데이트하지 않음 (중복 방지)
+        Logger.log('이미 존재하는 이메일, 업데이트하지 않음:', email);
+      } else {
+        // 새 행 추가 (이메일만)
+        sheet.appendRow([
+          email, 
+          timestamp,
+          '', // 소속 기관 유형
+          '', // 연구 분야
+          '', // 연구팀 규모
+          '', // 관심도
+          ''  // 추가 의견
+        ]);
+        Logger.log('이메일만 저장 완료 (새 행 추가):', email, timestamp);
+      }
+    }
     
     // 성공 응답
     return ContentService.createTextOutput(

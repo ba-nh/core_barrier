@@ -36,8 +36,44 @@ export default async function handler(
       });
     }
 
-    // Google Apps Script로 데이터 전송 (이메일 + 설문 조사)
-    console.log('Google Apps Script로 요청 전송:', { email, survey, url: googleAppsScriptUrl });
+    // 설문 조사가 없으면 이메일만 저장 (즉시 저장)
+    if (!survey) {
+      console.log('이메일만 저장 (설문 조사 없음):', email);
+      
+      const scriptResponse = await fetch(googleAppsScriptUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, survey: null }),
+      });
+
+      const responseText = await scriptResponse.text();
+      let scriptResult;
+      try {
+        scriptResult = JSON.parse(responseText);
+      } catch (e) {
+        console.error('JSON 파싱 오류:', e, '응답:', responseText);
+        throw new Error('Google Apps Script 응답 파싱 실패');
+      }
+
+      if (scriptResult && scriptResult.success) {
+        console.log('이메일만 저장 완료:', email);
+        return response.status(200).json({
+          success: true,
+          message: '이메일이 성공적으로 등록되었습니다',
+        });
+      } else {
+        console.error('Google Apps Script 오류:', scriptResult?.error);
+        return response.status(500).json({
+          success: false,
+          error: scriptResult?.error || '이메일 저장 실패',
+        });
+      }
+    }
+
+    // 설문 조사가 있으면 기존 이메일 행에 업데이트
+    console.log('Google Apps Script로 요청 전송 (설문 조사 업데이트):', { email, survey, url: googleAppsScriptUrl });
     
     const scriptResponse = await fetch(googleAppsScriptUrl, {
       method: 'POST',
