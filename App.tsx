@@ -57,7 +57,6 @@ const App: React.FC = () => {
       </main>
 
       <Footer onAdminClick={() => setIsAdminOpen(true)} />
-      
       <WaitlistModal isOpen={isModalOpen} onClose={closeModal} />
       <AdminStats isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </div>
