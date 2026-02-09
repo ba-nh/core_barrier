@@ -48,10 +48,13 @@ export const Pricing: React.FC<PricingProps> = ({ onCtaClick }) => {
             <h3 className="text-xl font-bold text-white mb-2">Professional</h3>
             <p className="text-slate-400 text-sm mb-6">서버 구축 및 초기 셋업이 필요한 연구실</p>
             <div className="mb-6">
-                <div className="text-lg text-brand-400 font-bold mb-1">초기 구축비 200만원</div>
+                <div className="text-lg text-brand-400 font-bold mb-1">초기 구축비: 사양별 맞춤 견적</div>
                 <div className="text-4xl font-bold text-white">
                 + 60만원 <span className="text-lg text-slate-500 font-normal">/ 년</span>
                 </div>
+                <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                  * 도입 환경 및 원하는 서버 사양에 따라 구축 비용이 변동될 수 있습니다.
+                </p>
             </div>
             
             <ul className="space-y-4 mb-8 flex-1">
