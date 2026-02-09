@@ -29,19 +29,15 @@ function doPost(e) {
     }
     
     const data = JSON.parse(e.postData.contents);
+    const action = data.action; // 'trackVisit' 또는 'submitEmail'
+    const visitorId = data.visitorId;
     const email = data.email;
     const survey = data.survey || {};
     
-    Logger.log('파싱된 이메일:', email);
+    Logger.log('액션:', action);
+    Logger.log('방문자 ID:', visitorId);
+    Logger.log('이메일:', email);
     Logger.log('설문 조사 데이터:', survey);
-    
-    // 이메일 유효성 검사
-    if (!email || !email.includes('@')) {
-      Logger.log('유효하지 않은 이메일:', email);
-      return ContentService.createTextOutput(
-        JSON.stringify({ success: false, error: '유효한 이메일 주소가 필요합니다' })
-      ).setMimeType(ContentService.MimeType.JSON);
-    }
     
     // 현재 시트 가져오기
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -50,12 +46,14 @@ function doPost(e) {
     // 헤더가 없으면 추가
     if (sheet.getLastRow() === 0) {
       sheet.appendRow([
-        '이메일', 
-        '등록일시', 
-        '소속 기관 유형', 
-        '연구 분야', 
-        '연구팀 규모', 
-        '관심도', 
+        '방문자 ID',
+        '방문 시간',
+        '이메일',
+        '등록일시',
+        '소속 기관 유형',
+        '연구 분야',
+        '연구팀 규모',
+        '관심도',
         '추가 의견'
       ]);
       Logger.log('헤더 추가됨');
@@ -68,75 +66,134 @@ function doPost(e) {
     
     Logger.log('타임스탬프:', timestamp);
     
-    // 이메일로 기존 행 찾기
-    const emailColumn = 1; // A열이 이메일
+    // 방문자 ID로 기존 행 찾기
+    const visitorIdColumn = 1; // A열이 방문자 ID
     const dataRange = sheet.getDataRange();
     const values = dataRange.getValues();
     let existingRowIndex = -1;
     
-    // 헤더를 제외하고 이메일 검색 (2행부터)
+    // 헤더를 제외하고 방문자 ID 검색 (2행부터)
     for (let i = 1; i < values.length; i++) {
-      if (values[i][emailColumn - 1] === email) {
+      if (values[i][visitorIdColumn - 1] === visitorId) {
         existingRowIndex = i + 1; // 시트 행 번호는 1부터 시작
-        Logger.log('기존 이메일 발견, 행 번호:', existingRowIndex);
+        Logger.log('기존 방문자 발견, 행 번호:', existingRowIndex);
         break;
       }
     }
     
-    // 설문 조사가 있으면 기존 행 업데이트, 없으면 새 행 추가
-    if (survey && Object.keys(survey).length > 0) {
-      // 설문 조사 데이터가 있음
+    // 액션에 따라 처리
+    if (action === 'trackVisit') {
+      // 방문 카운트
       if (existingRowIndex > 0) {
-        // 기존 행 업데이트 (이메일과 등록일시는 유지, 설문 조사만 업데이트)
-        sheet.getRange(existingRowIndex, 3, 1, 5).setValues([[
-          survey.organizationType || '',
-          survey.researchField || '',
-          survey.teamSize || '',
-          survey.interestLevel || '',
-          survey.additionalInfo || ''
-        ]]);
-        Logger.log('기존 행 업데이트 완료 (설문 조사 추가):', email, existingRowIndex);
+        // 이미 존재하는 방문자면 업데이트하지 않음 (중복 방지)
+        Logger.log('이미 존재하는 방문자, 업데이트하지 않음:', visitorId);
+        return ContentService.createTextOutput(
+          JSON.stringify({ 
+            success: true, 
+            message: '방문자가 이미 기록되었습니다',
+            visitorId: visitorId
+          })
+        ).setMimeType(ContentService.MimeType.JSON);
       } else {
-        // 이메일이 없으면 새 행 추가 (이메일 + 설문 조사)
+        // 새 방문자 추가
         sheet.appendRow([
-          email, 
+          visitorId,
           timestamp,
-          survey.organizationType || '',
-          survey.researchField || '',
-          survey.teamSize || '',
-          survey.interestLevel || '',
-          survey.additionalInfo || ''
-        ]);
-        Logger.log('새 행 추가 완료 (이메일 + 설문 조사):', email, timestamp);
-      }
-    } else {
-      // 설문 조사가 없으면 이메일만 저장
-      if (existingRowIndex > 0) {
-        // 이미 존재하는 이메일이면 업데이트하지 않음 (중복 방지)
-        Logger.log('이미 존재하는 이메일, 업데이트하지 않음:', email);
-      } else {
-        // 새 행 추가 (이메일만)
-        sheet.appendRow([
-          email, 
-          timestamp,
+          '', // 이메일 (나중에 업데이트)
+          '', // 등록일시 (나중에 업데이트)
           '', // 소속 기관 유형
           '', // 연구 분야
           '', // 연구팀 규모
           '', // 관심도
           ''  // 추가 의견
         ]);
-        Logger.log('이메일만 저장 완료 (새 행 추가):', email, timestamp);
+        Logger.log('새 방문자 추가 완료:', visitorId, timestamp);
+        return ContentService.createTextOutput(
+          JSON.stringify({ 
+            success: true, 
+            message: '방문자가 성공적으로 기록되었습니다',
+            visitorId: visitorId,
+            timestamp: timestamp
+          })
+        ).setMimeType(ContentService.MimeType.JSON);
       }
+    } else if (action === 'submitEmail') {
+      // 이메일/설문조사 제출
+      if (!visitorId) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ success: false, error: '방문자 ID가 필요합니다' })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      if (!email || !email.includes('@')) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ success: false, error: '유효한 이메일 주소가 필요합니다' })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      if (existingRowIndex > 0) {
+        // 기존 방문자 행 업데이트
+        const hasSurvey = survey && Object.keys(survey).length > 0;
+        
+        if (hasSurvey) {
+          // 이메일 + 설문조사 업데이트
+          sheet.getRange(existingRowIndex, 3, 1, 7).setValues([[
+            email, // 이메일
+            timestamp, // 등록일시
+            survey.organizationType || '',
+            survey.researchField || '',
+            survey.teamSize || '',
+            survey.interestLevel || '',
+            survey.additionalInfo || ''
+          ]]);
+          Logger.log('기존 방문자 행 업데이트 완료 (이메일 + 설문조사):', visitorId, email);
+        } else {
+          // 이메일만 업데이트
+          sheet.getRange(existingRowIndex, 3, 1, 2).setValues([[
+            email, // 이메일
+            timestamp // 등록일시
+          ]]);
+          Logger.log('기존 방문자 행 업데이트 완료 (이메일만):', visitorId, email);
+        }
+      } else {
+        // 방문자 ID가 없으면 새 행 추가 (이상한 경우지만 처리)
+        const hasSurvey = survey && Object.keys(survey).length > 0;
+        if (hasSurvey) {
+          sheet.appendRow([
+            visitorId,
+            timestamp, // 방문 시간
+            email,
+            timestamp, // 등록일시
+            survey.organizationType || '',
+            survey.researchField || '',
+            survey.teamSize || '',
+            survey.interestLevel || '',
+            survey.additionalInfo || ''
+          ]);
+        } else {
+          sheet.appendRow([
+            visitorId,
+            timestamp, // 방문 시간
+            email,
+            timestamp, // 등록일시
+            '', '', '', '', ''
+          ]);
+        }
+        Logger.log('새 행 추가 완료 (방문자 ID 없음):', visitorId, email);
+      }
+      
+      return ContentService.createTextOutput(
+        JSON.stringify({ 
+          success: true, 
+          message: '이메일이 성공적으로 등록되었습니다',
+          timestamp: timestamp
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
+    } else {
+      return ContentService.createTextOutput(
+        JSON.stringify({ success: false, error: '알 수 없는 액션: ' + action })
+      ).setMimeType(ContentService.MimeType.JSON);
     }
-    
-    // 성공 응답
-    return ContentService.createTextOutput(
-      JSON.stringify({ 
-        success: true, 
-        message: '이메일이 성공적으로 등록되었습니다',
-        timestamp: timestamp
-      })
-    ).setMimeType(ContentService.MimeType.JSON);
     
   } catch (error) {
     // 오류 로깅
@@ -165,4 +222,3 @@ function doGet(e) {
     })
   ).setMimeType(ContentService.MimeType.JSON);
 }
-

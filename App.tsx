@@ -15,9 +15,31 @@ const App: React.FC = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   useEffect(() => {
-    // Fake Door Test: 방문자 수 카운팅
-    const impressions = Number(localStorage.getItem('stats_impressions') || '0');
-    localStorage.setItem('stats_impressions', (impressions + 1).toString());
+    // 방문자 ID 생성 또는 가져오기
+    let visitorId = localStorage.getItem('visitor_id');
+    if (!visitorId) {
+      // 고유 방문자 ID 생성 (타임스탬프 + 랜덤 문자열)
+      visitorId = `visitor_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+      localStorage.setItem('visitor_id', visitorId);
+    }
+
+    // Google Sheets에 방문자 카운트
+    const trackVisit = async () => {
+      try {
+        await fetch('/api/track-visit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ visitorId }),
+        });
+      } catch (error) {
+        console.error('방문 추적 오류:', error);
+        // 오류가 발생해도 앱은 정상 작동하도록 함
+      }
+    };
+
+    trackVisit();
   }, []);
 
   const openModal = () => setIsModalOpen(true);

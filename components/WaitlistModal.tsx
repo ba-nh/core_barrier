@@ -69,12 +69,16 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
       } else {
         // 방법 2: Vercel 서버리스 함수 사용 (더 많은 제어 가능)
         // api/submit-email.ts 파일을 사용합니다
+        const visitorId = localStorage.getItem('visitor_id');
         const response = await fetch('/api/submit-email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ 
+            email,
+            visitorId: visitorId || '',
+          }),
         });
 
         const result = await response.json();
@@ -114,6 +118,9 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
       const conversions = Number(localStorage.getItem('stats_conversions') || '0');
       localStorage.setItem('stats_conversions', (conversions + 1).toString());
 
+      // 방문자 ID 가져오기
+      const visitorId = localStorage.getItem('visitor_id');
+
       // 이메일과 설문 조사 데이터를 함께 제출
       const response = await fetch('/api/submit-email', {
         method: 'POST',
@@ -122,6 +129,7 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
         },
         body: JSON.stringify({ 
           email,
+          visitorId: visitorId || '',
           survey: surveyData,
         }),
       });
@@ -292,6 +300,9 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
                         const conversions = Number(localStorage.getItem('stats_conversions') || '0');
                         localStorage.setItem('stats_conversions', (conversions + 1).toString());
 
+                        // 방문자 ID 가져오기
+                        const visitorId = localStorage.getItem('visitor_id');
+
                         const response = await fetch('/api/submit-email', {
                           method: 'POST',
                           headers: {
@@ -299,6 +310,7 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
                           },
                           body: JSON.stringify({ 
                             email,
+                            visitorId: visitorId || '',
                             survey: null, // 설문 조사 없이 저장
                           }),
                         });

@@ -18,11 +18,7 @@ export default async function handler(
   }
 
   try {
-    const { email, survey, visitorId } = request.body;
-
-    if (!email || !email.includes('@')) {
-      return response.status(400).json({ error: '유효한 이메일 주소가 필요합니다' });
-    }
+    const { visitorId } = request.body;
 
     if (!visitorId) {
       return response.status(400).json({ error: '방문자 ID가 필요합니다' });
@@ -36,32 +32,24 @@ export default async function handler(
       // 설정이 없어도 성공 응답 (개발 환경 대응)
       return response.status(200).json({
         success: true,
-        message: '이메일이 성공적으로 등록되었습니다',
+        message: '방문자가 기록되었습니다 (개발 모드)',
+        visitorId: visitorId,
       });
     }
 
-    // Google Apps Script로 이메일/설문조사 제출 요청 전송
-    console.log('Google Apps Script로 요청 전송:', { action: 'submitEmail', visitorId, email, survey, url: googleAppsScriptUrl });
-    
+    // Google Apps Script로 방문 추적 요청 전송
     const scriptResponse = await fetch(googleAppsScriptUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        action: 'submitEmail',
+        action: 'trackVisit',
         visitorId: visitorId,
-        email: email,
-        survey: survey || null,
       }),
     });
 
-    console.log('Google Apps Script 응답 상태:', scriptResponse.status);
-    
-    // 응답 텍스트 확인
     const responseText = await scriptResponse.text();
-    console.log('Google Apps Script 응답 본문:', responseText);
-
     let scriptResult;
     try {
       scriptResult = JSON.parse(responseText);
@@ -70,23 +58,22 @@ export default async function handler(
       throw new Error('Google Apps Script 응답 파싱 실패');
     }
 
-    if (scriptResult.success) {
-      console.log('Google Sheets에 이메일 추가 완료:', email);
+    if (scriptResult && scriptResult.success) {
+      console.log('방문자 추적 완료:', visitorId);
       return response.status(200).json({
         success: true,
-        message: '이메일이 성공적으로 등록되었습니다',
+        message: '방문자가 성공적으로 기록되었습니다',
+        visitorId: visitorId,
       });
     } else {
-      console.error('Google Apps Script 오류:', scriptResult.error);
-      // 실제 오류를 반환하여 디버깅 가능하게 함
+      console.error('Google Apps Script 오류:', scriptResult?.error);
       return response.status(500).json({
         success: false,
-        error: scriptResult.error || 'Google Apps Script 오류',
-        details: scriptResult,
+        error: scriptResult?.error || '방문자 추적 실패',
       });
     }
   } catch (error: any) {
-    console.error('이메일 제출 오류:', error);
+    console.error('방문 추적 오류:', error);
     console.error('오류 스택:', error.stack);
     
     // 실제 오류를 반환하여 디버깅 가능하게 함
@@ -97,4 +84,3 @@ export default async function handler(
     });
   }
 }
-
