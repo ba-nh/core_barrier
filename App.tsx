@@ -8,11 +8,9 @@ import { ComparisonTable } from './components/ComparisonTable';
 import { Pricing } from './components/Pricing';
 import { Footer } from './components/Footer';
 import { WaitlistModal } from './components/WaitlistModal';
-import { AdminStats } from './components/AdminStats';
 
 const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   useEffect(() => {
     // 방문자 ID 생성 또는 가져오기
@@ -58,9 +56,6 @@ const App: React.FC = () => {
             <a href="#pricing" className="text-sm text-slate-400 hover:text-white transition-colors">요금제</a>
           </div>
           <div className="flex items-center gap-3">
-             <button onClick={() => setIsAdminOpen(true)} className="hidden md:block text-[10px] font-medium text-slate-600 hover:text-slate-400 px-2 py-1 uppercase tracking-widest transition-colors">
-                Admin Stats
-             </button>
             <Button size="sm" onClick={openModal}>무료 데모</Button>
           </div>
         </div>
@@ -78,9 +73,8 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <Footer onAdminClick={() => setIsAdminOpen(true)} />
+      <Footer />
       <WaitlistModal isOpen={isModalOpen} onClose={closeModal} />
-      <AdminStats isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </div>
   );
 };

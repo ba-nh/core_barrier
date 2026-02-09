@@ -1,11 +1,7 @@
 import React from 'react';
 import { Logo } from './Logo';
 
-interface FooterProps {
-  onAdminClick?: () => void;
-}
-
-export const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
+export const Footer: React.FC = () => {
   return (
     <footer className="bg-dark-900 border-t border-slate-800 py-12 text-sm">
       <div className="container mx-auto px-4">
@@ -44,12 +40,6 @@ export const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
             © 2026 Core BArrier. All rights reserved.
           </div>
           <div className="flex items-center gap-4">
-             <button 
-               onClick={onAdminClick}
-               className="text-[10px] text-slate-700 hover:text-slate-500 transition-colors uppercase tracking-widest font-medium"
-             >
-                Owner Dashboard
-             </button>
              <div className="flex gap-4 text-slate-500">
                 <span className="hover:text-white cursor-pointer">Twitter</span>
                 <span className="hover:text-white cursor-pointer">LinkedIn</span>

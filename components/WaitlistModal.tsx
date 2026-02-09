@@ -102,26 +102,10 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
     setStatus('loading');
     
     try {
-      // Fake Door Test Metrics 수집
-      const conversionData = {
-        email,
-        timestamp: new Date().toISOString(),
-        device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-        userAgent: navigator.userAgent
-      };
-
-      // 1. 상세 리스트 저장
-      const existingEntries = JSON.parse(localStorage.getItem('waitlist_entries') || '[]');
-      localStorage.setItem('waitlist_entries', JSON.stringify([...existingEntries, conversionData]));
-
-      // 2. 전체 전환 수 카운트 (계산 용이성)
-      const conversions = Number(localStorage.getItem('stats_conversions') || '0');
-      localStorage.setItem('stats_conversions', (conversions + 1).toString());
-
       // 방문자 ID 가져오기
       const visitorId = localStorage.getItem('visitor_id');
 
-      // 이메일과 설문 조사 데이터를 함께 제출
+      // 이메일과 설문 조사 데이터를 Google Sheets에 제출
       const response = await fetch('/api/submit-email', {
         method: 'POST',
         headers: {
@@ -284,22 +268,6 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({ isOpen, onClose })
                       // 설문 조사 없이 이메일만 저장
                       setStatus('loading');
                       try {
-                        // Fake Door Test Metrics 수집
-                        const conversionData = {
-                          email,
-                          timestamp: new Date().toISOString(),
-                          device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-                          userAgent: navigator.userAgent
-                        };
-
-                        // 1. 상세 리스트 저장
-                        const existingEntries = JSON.parse(localStorage.getItem('waitlist_entries') || '[]');
-                        localStorage.setItem('waitlist_entries', JSON.stringify([...existingEntries, conversionData]));
-
-                        // 2. 전체 전환 수 카운트 (계산 용이성)
-                        const conversions = Number(localStorage.getItem('stats_conversions') || '0');
-                        localStorage.setItem('stats_conversions', (conversions + 1).toString());
-
                         // 방문자 ID 가져오기
                         const visitorId = localStorage.getItem('visitor_id');
 
