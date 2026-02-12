@@ -56,7 +56,7 @@ const App: React.FC = () => {
             <a href="#pricing" className="text-sm text-slate-400 hover:text-white transition-colors">요금제</a>
           </div>
           <div className="flex items-center gap-3">
-            <Button size="sm" onClick={openModal}>무료 데모</Button>
+            <Button size="sm" onClick={openModal}>시작하기</Button>
           </div>
         </div>
       </nav>

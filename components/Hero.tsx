@@ -36,7 +36,7 @@ export const Hero: React.FC<HeroProps> = ({ onCtaClick }) => {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-300">
           <Button size="lg" onClick={onCtaClick} className="w-full sm:w-auto group">
-            무료 데모 신청하기
+            지금 시작하기
             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Button>
           <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => document.getElementById('problem')?.scrollIntoView({ behavior: 'smooth' })}>
